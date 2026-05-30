@@ -1,0 +1,13 @@
+; Countdown from 10 to 1 using OUT
+
+  LOAD ACC, 10
+loop:
+  OUT ACC
+  LOAD B, 1
+  SUB ACC, B
+  JZ done
+  JMP loop
+done:
+  LOAD ACC, 10    ; newline
+  OUT ACC
+  HLT

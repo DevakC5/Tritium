@@ -64,6 +64,14 @@ static void update_flags(CPU *cpu, Tryte result) {
     else tryte_zero(&cpu->flags);
 }
 
+static Tryte power3(int n) {
+    int64_t v = 1;
+    for (int i = 0; i < n && i < 18; i++) v *= 3;
+    Tryte t;
+    tryte_from_int64(v, &t);
+    return t;
+}
+
 int cpu_step(CPU *cpu, Memory *rom, Memory *ram) {
     if (cpu->halted) return 0;
 
@@ -115,8 +123,7 @@ int cpu_step(CPU *cpu, Memory *rom, Memory *ram) {
             Tryte rem;
             result = tryte_div(dest_val, src_val, &rem);
             cpu_set_reg(cpu, di.reg_dest, result);
-            if (REG_B == di.reg_dest || REG_B != di.reg_dest)
-                cpu_set_reg(cpu, REG_B, rem);
+            cpu_set_reg(cpu, REG_B, rem);
             update_flags(cpu, result);
             break;
         }
@@ -169,6 +176,44 @@ int cpu_step(CPU *cpu, Memory *rom, Memory *ram) {
         case OP_CMP:
             result = tryte_sub(dest_val, src_val);
             update_flags(cpu, result);
+            break;
+
+        case OP_LD:
+            result = mem_read_tryte(cpu, rom, ram, tryte_to_addr(operand));
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+
+        case OP_SHL: {
+            int64_t shift = tryte_to_int64(src_val);
+            if (shift < 0) shift = 0;
+            result = tryte_mul(dest_val, power3((int)shift));
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+        }
+
+        case OP_SHR: {
+            int64_t shift = tryte_to_int64(src_val);
+            if (shift < 0) shift = 0;
+            Tryte rem;
+            result = tryte_div(dest_val, power3((int)shift), &rem);
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+        }
+
+        case OP_MOD: {
+            Tryte rem;
+            tryte_div(dest_val, src_val, &rem);
+            cpu_set_reg(cpu, di.reg_dest, rem);
+            update_flags(cpu, rem);
+            break;
+        }
+
+        case OP_SWAP:
+            cpu_set_reg(cpu, di.reg_dest, src_val);
+            cpu_set_reg(cpu, di.reg_src, dest_val);
             break;
 
         case OP_JMP:
@@ -276,7 +321,7 @@ int cpu_run(CPU *cpu, Memory *rom, Memory *ram) {
     while (!cpu->halted) {
         if (!cpu_step(cpu, rom, ram)) break;
         steps++;
-        if (steps > 1000000) { cpu->halted = 1; break; }
+        if (steps > CPU_MAX_CYCLES) { cpu->halted = 1; break; }
     }
     return steps;
 }

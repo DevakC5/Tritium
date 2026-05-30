@@ -3,6 +3,7 @@
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
+#include <errno.h>
 
 #define MAX_TOKENS 16
 #define MAX_LABELS 256
@@ -47,8 +48,43 @@ static int is_register(const char *s) {
 
 static int parse_int(const char *s, int64_t *val) {
     char *end;
+    errno = 0;
     *val = strtoll(s, &end, 10);
-    return *end == '\0';
+    return errno != ERANGE && *end == '\0';
+}
+
+static int is_ternary_literal(const char *s) {
+    if (*s == '\0') return 0;
+    for (; *s; s++)
+        if (*s != '-' && *s != '0' && *s != '+')
+            return 0;
+    return 1;
+}
+
+static int64_t ternary_literal_val(const char *s) {
+    Tryte t;
+    tryte_from_str(s, &t);
+    return tryte_to_int64(t);
+}
+
+static int is_string_literal(const char *s) {
+    return *s == '"';
+}
+
+static int64_t string_first_char_val(const char *s) {
+    size_t len = strlen(s);
+    if (len < 3 || s[0] != '"' || s[len - 1] != '"') return -1;
+    return (int64_t)(unsigned char)s[1];
+}
+
+static int is_valid_label(const char *s) {
+    if (*s == '\0') return 0;
+    if (*s >= '0' && *s <= '9') return 0;
+    for (; *s; s++)
+        if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z')
+              || (*s >= '0' && *s <= '9') || *s == '_'))
+            return 0;
+    return 1;
 }
 
 static int is_label_def(const char *s) {
@@ -155,12 +191,32 @@ AsmResult asm_assemble_ex(const char *source, Tryte **code, size_t *len) {
         if (is_label_def(tokens[ti])) {
             size_t nlen = strlen(tokens[ti]);
             tokens[ti][nlen - 1] = '\0';
+            if (!is_valid_label(tokens[ti])) {
+                result.valid = 0;
+                result.error_msg = "invalid label name";
+                result.error_line = line_num;
+                free(output);
+                return result;
+            }
             if (sym_find(&st, tokens[ti]) < 0)
                 sym_add(&st, tokens[ti], output_len);
             ti++;
         }
 
         if (ti >= ntok) continue;
+
+        if (strcmp(tokens[ti], ".str") == 0 || strcmp(tokens[ti], ".db") == 0) {
+            ti++;
+            if (ti < ntok && is_string_literal(tokens[ti])) {
+                const char *s = tokens[ti];
+                size_t slen = strlen(s);
+                if (slen >= 3) {
+                    for (size_t ci = 1; ci < slen - 1; ci++)
+                        output[output_len++] = make_tryte((int64_t)(unsigned char)s[ci]);
+                }
+            }
+            continue;
+        }
 
         const char *mnemonic = tokens[ti++];
         Opcode op = opcode_from_name(mnemonic);
@@ -198,9 +254,20 @@ AsmResult asm_assemble_ex(const char *source, Tryte **code, size_t *len) {
                 if (ti < ntok && tokens[ti][0] == ',') ti++;
                 if (ti < ntok) {
                     int64_t v;
-                    if (parse_int(tokens[ti], &v))
+                    if (parse_int(tokens[ti], &v)) {
                         operand_val = v;
-                    else {
+                    } else if (is_ternary_literal(tokens[ti])) {
+                        operand_val = ternary_literal_val(tokens[ti]);
+                    } else if (is_string_literal(tokens[ti])) {
+                        operand_val = string_first_char_val(tokens[ti]);
+                        if (operand_val < 0) {
+                            result.valid = 0;
+                            result.error_msg = "empty string literal";
+                            result.error_line = line_num;
+                            free(output);
+                            return result;
+                        }
+                    } else {
                         strncpy(label_ref, tokens[ti], 63);
                         label_ref[63] = '\0';
                         has_label_ref = 1;
@@ -211,9 +278,20 @@ AsmResult asm_assemble_ex(const char *source, Tryte **code, size_t *len) {
         } else if (has_operand) {
             if (ti < ntok) {
                 int64_t v;
-                if (parse_int(tokens[ti], &v))
+                if (parse_int(tokens[ti], &v)) {
                     operand_val = v;
-                else {
+                } else if (is_ternary_literal(tokens[ti])) {
+                    operand_val = ternary_literal_val(tokens[ti]);
+                } else if (is_string_literal(tokens[ti])) {
+                    operand_val = string_first_char_val(tokens[ti]);
+                    if (operand_val < 0) {
+                        result.valid = 0;
+                        result.error_msg = "empty string literal";
+                        result.error_line = line_num;
+                        free(output);
+                        return result;
+                    }
+                } else {
                     strncpy(label_ref, tokens[ti], 63);
                     label_ref[63] = '\0';
                     has_label_ref = 1;

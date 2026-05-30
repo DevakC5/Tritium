@@ -104,9 +104,59 @@ static int test_assemble_unknown_instr(void) {
     return 0;
 }
 
+static int test_assemble_ternary_literal(void) {
+    size_t len;
+    Tryte *code = asm_assemble("LOAD ACC, +0-\nHLT\n", &len);
+    mu_assert(code != NULL, "ternary literal");
+    mu_assert(len == 3, "LOAD + operand + HLT");
+    int64_t val = tryte_to_int64(code[1]);
+    Tryte expected;
+    tryte_from_str("+0-", &expected);
+    mu_assert(val == tryte_to_int64(expected), "ternary value matches +0-");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_string_literal(void) {
+    size_t len;
+    Tryte *code = asm_assemble("LOAD ACC, \"A\"\nHLT\n", &len);
+    mu_assert(code != NULL, "string literal");
+    mu_assert(len == 3, "LOAD + operand + HLT");
+    mu_assert(tryte_to_int64(code[1]) == 65, "string 'A' = 65");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_str_directive(void) {
+    size_t len;
+    Tryte *code = asm_assemble(".str \"Hi\"\nHLT\n", &len);
+    mu_assert(code != NULL, "str directive");
+    mu_assert(len == 3, "\"Hi\" = 2 chars + HLT");
+    mu_assert(tryte_to_int64(code[0]) == 72, "'H' = 72");
+    mu_assert(tryte_to_int64(code[1]) == 105, "'i' = 105");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_db_directive(void) {
+    size_t len;
+    Tryte *code = asm_assemble(".db \"ABC\"\nHLT\n", &len);
+    mu_assert(code != NULL, "db directive");
+    mu_assert(len == 4, "\"ABC\" = 3 chars + HLT");
+    mu_assert(tryte_to_int64(code[0]) == 65, "'A'");
+    mu_assert(tryte_to_int64(code[1]) == 66, "'B'");
+    mu_assert(tryte_to_int64(code[2]) == 67, "'C'");
+    free(code);
+    return 0;
+}
+
 void test_asm_suite(void) {
     mu_run_test(test_assemble_simple);
     mu_run_test(test_assemble_operand);
+    mu_run_test(test_assemble_ternary_literal);
+    mu_run_test(test_assemble_string_literal);
+    mu_run_test(test_assemble_str_directive);
+    mu_run_test(test_assemble_db_directive);
     mu_run_test(test_assemble_label_backward);
     mu_run_test(test_assemble_forward_label);
     mu_run_test(test_assemble_comments);

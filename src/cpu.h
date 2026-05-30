@@ -5,6 +5,8 @@
 #include "mem.h"
 #include "isa.h"
 
+#define CPU_MAX_CYCLES 1000000
+
 typedef struct {
     Tryte pc;
     Tryte sp;

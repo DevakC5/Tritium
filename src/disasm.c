@@ -5,7 +5,16 @@
 #include <stdio.h>
 #include <string.h>
 
-char *disasm_one(Tryte instr, int addr) {
+static void append_operand(char *buf, size_t buf_size, const Tryte *operand) {
+    if (!operand) return;
+    int64_t oval = tryte_to_int64(*operand);
+    char tryte_str[16];
+    tryte_to_str(*operand, tryte_str, sizeof(tryte_str));
+    size_t blen = strlen(buf);
+    snprintf(buf + blen, buf_size - blen, ", %ld (%s)", (long)oval, tryte_str);
+}
+
+char *disasm_one(Tryte instr, int addr, const Tryte *operand) {
     DecodedInstr di = decode_instr(instr);
     char buf[256];
     char tryte_str[16];
@@ -44,16 +53,23 @@ char *disasm_one(Tryte instr, int addr) {
             break;
         case OP_LOAD:
             snprintf(buf, sizeof(buf), "LOAD %s", dst);
+            append_operand(buf, sizeof(buf), operand);
             break;
         case OP_STORE:
             snprintf(buf, sizeof(buf), "STORE %s", src);
+            append_operand(buf, sizeof(buf), operand);
+            break;
+        case OP_LD:
+            snprintf(buf, sizeof(buf), "LD %s", dst);
+            append_operand(buf, sizeof(buf), operand);
             break;
         case OP_CMP:
-            snprintf(buf, sizeof(buf), "CMP");
+            snprintf(buf, sizeof(buf), "CMP %s, %s", dst, src);
             break;
         default:
             if (di.has_operand) {
                 snprintf(buf, sizeof(buf), "%s", opcode_name(di.op));
+                append_operand(buf, sizeof(buf), operand);
             } else if (instr_uses_src(di.op) && instr_uses_dest(di.op)) {
                 snprintf(buf, sizeof(buf), "%s %s, %s", opcode_name(di.op), dst, src);
             } else if (instr_uses_dest(di.op)) {
@@ -77,8 +93,15 @@ char **disasm_all(const Tryte *code, size_t len, int start_addr) {
     char **lines = (char **)calloc(len + 1, sizeof(char *));
     if (!lines) return NULL;
 
-    for (size_t i = 0; i < len; i++)
-        lines[i] = disasm_one(code[i], start_addr + (int)i);
-    lines[len] = NULL;
+    int out_idx = 0;
+    for (size_t i = 0; i < len; ) {
+        DecodedInstr di = decode_instr(code[i]);
+        const Tryte *operand = NULL;
+        if (di.has_operand && i + 1 < len)
+            operand = &code[i + 1];
+        lines[out_idx++] = disasm_one(code[i], start_addr + (int)i, operand);
+        i += di.has_operand ? 2 : 1;
+    }
+    lines[out_idx] = NULL;
     return lines;
 }

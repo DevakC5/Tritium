@@ -1,0 +1,18 @@
+; Compute 5! and print each step using CALL/RET
+; Demonstrates subroutine calls and stack usage
+
+  LOAD ACC, 5
+loop:
+  CALL print_num
+  LOAD B, 1
+  SUB ACC, B
+  JZ done
+  JMP loop
+done:
+  LOAD ACC, 10
+  OUT ACC
+  HLT
+
+print_num:
+  OUT ACC
+  RET

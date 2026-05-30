@@ -7,7 +7,7 @@ Balanced-ternary computer simulator in C99. Static library + CLI assembler/debug
 | Command | What |
 |---|---|
 | `make` | Build `lib/libtrinary.a` + `bin/trc` |
-| `make test` | Compile & run `./test_runner` (4 suites) |
+| `make test` | Compile & run `./test_runner` (5 suites, 137 tests) |
 | `make clean` | Remove `build/ lib/ bin/ test_runner` |
 | `make examples` | Run all `examples/*.trc` through `bin/trc` |
 
@@ -50,20 +50,53 @@ Test files include headers directly from `src/` (e.g. `#include "vm.h"` resolves
 ## CLI
 
 ```
-trc <file.trc>       # assemble & run
-trc -d <file.trc>    # debug mode (single-step prompt)
-trc -r               # interactive REPL
-trc --dump <file>    # disassemble bytecode (stub)
+trc <file.trc>            # assemble & run
+trc -d <file.trc>         # debug mode (breakpoints, step, list, mem, etc.)
+trc -r                    # interactive REPL (multi-line, persistent state)
+trc --dump <file>         # disassemble (.trc or .tbc)
+trc --assemble <src> <dst> # assemble .trc to .tbc binary
 ```
 
 ## ISA quick reference
 
-27 opcodes. 5-trit opcode + 4-trit operand encoding. Registers: ACC, B, SP, FL, PC.
-Key: `LOAD`/`STORE` take an address operand; `MOV` copies between registers; `IN`/`OUT` do character I/O; `CMP` sets `FLAGS` for conditional jumps (`JE`, `JNE`, `JG`, `JL`, `JZ`).
+32 opcodes. 5-trit opcode + 4-trit operand encoding. Registers: ACC, B, SP, FL, PC.
 
-## What's missing / stale
+| Mnemonic | Operands | Description |
+|----------|----------|-------------|
+| `LOAD` | rd, val | rd ← val (immediate) |
+| `STORE` | rs, addr | mem[addr] ← rs |
+| `LD` | rd, addr | rd ← mem[addr] |
+| `MOV` | rd, rs | rd ← rs |
+| `SHL` | rd, rs | rd ← rd × 3^(rs) |
+| `SHR` | rd, rs | rd ← rd ÷ 3^(rs) |
+| `MOD` | rd, rs | rd ← rd mod rs |
+| `SWAP` | rd, rs | Swap rd ↔ rs |
+| `IN`/`OUT` | rd/rs | Character I/O |
+| `CMP` | rd, rs | Set FLAGS for conditional jumps |
+| `JMP`/`JE`/`JNE`/`JG`/`JL`/`JZ` | addr | Branching |
+| `CALL`/`RET` | addr/— | Subroutine call/return |
+| `PUSH`/`POP` | rs/rd | Stack ops |
+| `ADD`/`SUB`/`MUL`/`DIV`/`NEG` | rd[, rs] | Arithmetic |
+| `AND`/`OR`/`XOR`/`NOT` | rd[, rs] | Logic per trit |
 
-- `docs/` and `paper/` are empty — no design docs exist beyond `dev/PLAN.md`.
-- No CI, no lint/formatter/typecheck, no `.gitignore`, no pre-commit hooks.
-- `--dump` flag in CLI is a stub (returns error).
-- No assembly test suite — `test/test_cpu.c` tests CPU via inline assembly strings but there is no standalone assembler test file.
+## Debugger commands
+
+| Command | Description |
+|---------|-------------|
+| `s`, `step` | Single-step one instruction |
+| `n`, `next` | Step over CALL |
+| `c`, `continue` | Run until breakpoint or halt |
+| `b <addr>` | Set breakpoint |
+| `bc [addr]` | Clear breakpoint(s) |
+| `bl` | List breakpoints |
+| `m <addr> [n]` | Show n trytes of memory |
+| `l [n]` | List n instructions around PC |
+| `R`, `reset` | Reset CPU |
+| `q`, `quit` | Quit |
+
+## REPL
+
+- Assembly lines **accumulate** until blank line runs them
+- Dot-commands: `.q`, `.r`, `.load <file>`, `.h`, `.end`
+- All debug commands available without dots (e.g. `s`, `c`, `m 4000`)
+- State persists across runs; set breakpoints before continuing

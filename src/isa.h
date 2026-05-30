@@ -31,7 +31,12 @@ typedef enum {
     OP_IN    = 24,
     OP_OUT   = 25,
     OP_CMP   = 26,
-    OP_COUNT = 27
+    OP_LD    = 27,
+    OP_SHL   = 28,
+    OP_SHR   = 29,
+    OP_MOD   = 30,
+    OP_SWAP  = 31,
+    OP_COUNT = 32
 } Opcode;
 
 typedef enum {

@@ -40,5 +40,15 @@ examples: $(LIB) $(BIN)
 		echo; \
 	done
 
+PREFIX ?= /usr/local
+
+install: $(LIB) $(BIN)
+	install -d $(DESTDIR)$(PREFIX)/lib
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install -d $(DESTDIR)$(PREFIX)/include
+	install -m 644 $(LIB) $(DESTDIR)$(PREFIX)/lib/
+	install -m 755 $(BIN) $(DESTDIR)$(PREFIX)/bin/
+	install -m 644 include/trinary.h $(DESTDIR)$(PREFIX)/include/
+
 clean:
 	rm -rf build lib bin test_runner

@@ -1,0 +1,17 @@
+; Print squares of 1 through 8
+; Demonstrates MUL instruction
+
+  LOAD ACC, 1
+loop:
+  PUSH ACC
+  MUL ACC, ACC
+  OUT ACC
+  POP ACC
+  LOAD B, 1
+  ADD ACC, B
+  LOAD B, 9
+  CMP ACC, B
+  JL loop
+  LOAD ACC, 10
+  OUT ACC
+  HLT
