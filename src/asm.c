@@ -119,7 +119,17 @@ static char **tokenize_line(const char *line, int *ntok) {
                 in_token = 0;
             }
         } else {
-            if (!in_token) { token = p; in_token = 1; }
+            if (!in_token) {
+                token = p;
+                in_token = 1;
+                if (*p == '"') {
+                    p++;
+                    while (*p && *p != '"') {
+                        if (*p == '\\' && *(p+1)) p++;
+                        p++;
+                    }
+                }
+            }
         }
     }
     if (in_token && strlen(token) > 0 && n < MAX_TOKENS)
@@ -228,6 +238,16 @@ AsmResult asm_assemble_ex(const char *source, Tryte **code, size_t *len) {
                         }
                     }
                 }
+                ti++;
+            }
+            while (ti < ntok) {
+                int64_t val;
+                if (parse_int(tokens[ti], &val)) {
+                    output[output_len++] = make_tryte(val);
+                } else if (is_ternary_literal(tokens[ti])) {
+                    output[output_len++] = make_tryte(ternary_literal_val(tokens[ti]));
+                }
+                ti++;
             }
             continue;
         }
