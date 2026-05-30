@@ -72,6 +72,8 @@ char *disasm_one(Tryte instr, int addr, const Tryte *operand) {
                 append_operand(buf, sizeof(buf), operand);
             } else if (instr_uses_src(di.op) && instr_uses_dest(di.op)) {
                 snprintf(buf, sizeof(buf), "%s %s, %s", opcode_name(di.op), dst, src);
+            } else if (instr_uses_src(di.op)) {
+                snprintf(buf, sizeof(buf), "%s %s", opcode_name(di.op), src);
             } else if (instr_uses_dest(di.op)) {
                 snprintf(buf, sizeof(buf), "%s %s", opcode_name(di.op), dst);
             } else {

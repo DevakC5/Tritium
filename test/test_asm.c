@@ -298,6 +298,128 @@ static int test_assemble_equ_duplicate(void) {
     return 0;
 }
 
+static int test_assemble_inc_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("INC ACC\nHLT\n", &len);
+    mu_assert(code != NULL, "INC opcode");
+    mu_assert(len == 2, "INC + HLT");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_INC, "decoded as INC");
+    mu_assert(di.reg_dest == REG_ACC, "INC dest = ACC");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_dec_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("DEC B\nHLT\n", &len);
+    mu_assert(code != NULL, "DEC opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_DEC, "decoded as DEC");
+    mu_assert(di.reg_dest == REG_B, "DEC dest = B");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_abs_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("ABS ACC\nHLT\n", &len);
+    mu_assert(code != NULL, "ABS opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_ABS, "decoded as ABS");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_jge_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("JGE loop\nloop:\nHLT\n", &len);
+    mu_assert(code != NULL, "JGE opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_JGE, "decoded as JGE");
+    mu_assert(di.has_operand, "JGE has operand");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_jle_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("JLE loop\nloop:\nHLT\n", &len);
+    mu_assert(code != NULL, "JLE opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_JLE, "decoded as JLE");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_jmpr_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("JMPR B\nHLT\n", &len);
+    mu_assert(code != NULL, "JMPR opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_JMPR, "decoded as JMPR");
+    mu_assert(!di.has_operand, "JMPR has no operand");
+    mu_assert(di.reg_src == REG_B, "JMPR src = B");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_callr_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("CALLR ACC\nHLT\n", &len);
+    mu_assert(code != NULL, "CALLR opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_CALLR, "decoded as CALLR");
+    mu_assert(di.reg_src == REG_ACC, "CALLR src = ACC");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_outnum_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("OUTNUM ACC\nHLT\n", &len);
+    mu_assert(code != NULL, "OUTNUM opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_OUTNUM, "decoded as OUTNUM");
+    mu_assert(!di.has_operand, "OUTNUM has no operand");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_outstr_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("OUTSTR 4000\nHLT\n", &len);
+    mu_assert(code != NULL, "OUTSTR opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_OUTSTR, "decoded as OUTSTR");
+    mu_assert(di.has_operand, "OUTSTR has operand");
+    mu_assert(tryte_to_int64(code[1]) == 4000, "OUTSTR addr = 4000");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_instr_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("INSTR 4000\nHLT\n", &len);
+    mu_assert(code != NULL, "INSTR opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_INSTR, "decoded as INSTR");
+    mu_assert(di.has_operand, "INSTR has operand");
+    free(code);
+    return 0;
+}
+
+static int test_assemble_rnd_opcode(void) {
+    size_t len;
+    Tryte *code = asm_assemble("RND ACC\nHLT\n", &len);
+    mu_assert(code != NULL, "RND opcode");
+    DecodedInstr di = decode_instr(code[0]);
+    mu_assert(di.op == OP_RND, "decoded as RND");
+    mu_assert(!di.has_operand, "RND has no operand");
+    free(code);
+    return 0;
+}
+
 void test_asm_suite(void) {
     mu_run_test(test_assemble_simple);
     mu_run_test(test_assemble_operand);
@@ -327,4 +449,15 @@ void test_asm_suite(void) {
     mu_run_test(test_assemble_shl_opcode);
     mu_run_test(test_assemble_swap_opcode);
     mu_run_test(test_assemble_mod_opcode);
+    mu_run_test(test_assemble_inc_opcode);
+    mu_run_test(test_assemble_dec_opcode);
+    mu_run_test(test_assemble_abs_opcode);
+    mu_run_test(test_assemble_jge_opcode);
+    mu_run_test(test_assemble_jle_opcode);
+    mu_run_test(test_assemble_jmpr_opcode);
+    mu_run_test(test_assemble_callr_opcode);
+    mu_run_test(test_assemble_outnum_opcode);
+    mu_run_test(test_assemble_outstr_opcode);
+    mu_run_test(test_assemble_instr_opcode);
+    mu_run_test(test_assemble_rnd_opcode);
 }

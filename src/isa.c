@@ -35,6 +35,17 @@ static const struct { Opcode op; const char *name; int has_op; int branch; int u
     {OP_SHR,   "SHR",   0, 0, 1, 1},
     {OP_MOD,   "MOD",   0, 0, 1, 1},
     {OP_SWAP,  "SWAP",  0, 0, 1, 1},
+    {OP_INC,   "INC",   0, 0, 1, 0},
+    {OP_DEC,   "DEC",   0, 0, 1, 0},
+    {OP_ABS,   "ABS",   0, 0, 1, 0},
+    {OP_JGE,   "JGE",   1, 1, 0, 0},
+    {OP_JLE,   "JLE",   1, 1, 0, 0},
+    {OP_JMPR,  "JMPR",  0, 1, 0, 1},
+    {OP_CALLR, "CALLR", 0, 1, 0, 1},
+    {OP_OUTNUM,"OUTNUM", 0, 0, 0, 1},
+    {OP_OUTSTR,"OUTSTR", 1, 0, 0, 0},
+    {OP_INSTR, "INSTR",  1, 0, 0, 0},
+    {OP_RND,   "RND",    0, 0, 1, 0},
 };
 
 int instr_has_operand(Opcode op) {

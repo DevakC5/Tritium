@@ -56,6 +56,17 @@ Instructions with an operand (LOAD, STORE, JMP, etc.) occupy a second tryte for 
 | 29 | SHR | rd, rs | rd ← rd ÷ 3^(rs) (shift right) |
 | 30 | MOD | rd, rs | rd ← rd mod rs (remainder) |
 | 31 | SWAP | rd, rs | Swap rd ↔ rs |
+| 32 | INC | rd | rd ← rd + 1 |
+| 33 | DEC | rd | rd ← rd − 1 |
+| 34 | ABS | rd | rd ← \|rd\| |
+| 35 | JGE | addr | PC ← addr if FLAGS ≥ 0 |
+| 36 | JLE | addr | PC ← addr if FLAGS ≤ 0 |
+| 37 | JMPR | rs | PC ← rs (indirect jump) |
+| 38 | CALLR | rs | Push PC; PC ← rs (indirect call) |
+| 39 | OUTNUM | rs | Print rs as decimal string |
+| 40 | OUTSTR | addr | Print null-terminated string at addr |
+| 41 | INSTR | addr | Read line into memory at addr (null-terminated) |
+| 42 | RND | rd | rd ← pseudo-random tryte |
 
 ## Memory map
 

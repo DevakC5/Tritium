@@ -64,6 +64,12 @@ static void update_flags(CPU *cpu, Tryte result) {
     else tryte_zero(&cpu->flags);
 }
 
+static Tryte make_tryte(int64_t val) {
+    Tryte t;
+    tryte_from_int64(val, &t);
+    return t;
+}
+
 static Tryte power3(int n) {
     int64_t v = 1;
     for (int i = 0; i < n && i < 18; i++) v *= 3;
@@ -215,6 +221,107 @@ int cpu_step(CPU *cpu, Memory *rom, Memory *ram) {
             cpu_set_reg(cpu, di.reg_dest, src_val);
             cpu_set_reg(cpu, di.reg_src, dest_val);
             break;
+
+        case OP_INC:
+            result = tryte_add(dest_val, make_tryte(1));
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+
+        case OP_DEC: {
+            Tryte one;
+            tryte_from_int64(1, &one);
+            result = tryte_sub(dest_val, one);
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+        }
+
+        case OP_ABS: {
+            int64_t av = tryte_to_int64(dest_val);
+            if (av < 0)
+                result = tryte_neg(dest_val);
+            else
+                result = dest_val;
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+        }
+
+        case OP_JGE: {
+            int64_t f = tryte_to_int64(cpu->flags);
+            if (f >= 0) next_pc = tryte_to_addr(operand);
+            break;
+        }
+
+        case OP_JLE: {
+            int64_t f = tryte_to_int64(cpu->flags);
+            if (f <= 0) next_pc = tryte_to_addr(operand);
+            break;
+        }
+
+        case OP_JMPR:
+            next_pc = tryte_to_addr(src_val);
+            break;
+
+        case OP_CALLR: {
+            size_t sp = tryte_to_addr(cpu->sp);
+            Tryte ret_addr;
+            tryte_from_int64((int64_t)next_pc, &ret_addr);
+            mem_write_tryte(cpu, rom, ram, sp, ret_addr);
+            {
+                Tryte new_sp;
+                tryte_from_int64((int64_t)(sp - 1), &new_sp);
+                cpu->sp = new_sp;
+            }
+            next_pc = tryte_to_addr(src_val);
+            break;
+        }
+
+        case OP_OUTNUM: {
+            int64_t v = tryte_to_int64(src_val);
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%ld", (long)v);
+            fputs(buf, stdout);
+            fflush(stdout);
+            break;
+        }
+
+        case OP_OUTSTR: {
+            size_t a = tryte_to_addr(operand);
+            while (1) {
+                Tryte t = mem_read_tryte(cpu, rom, ram, a);
+                int64_t v = tryte_to_int64(t);
+                if (v == 0) break;
+                fputc((int)(v & 0xFF), stdout);
+                a++;
+            }
+            fflush(stdout);
+            break;
+        }
+
+        case OP_INSTR: {
+            size_t a = tryte_to_addr(operand);
+            size_t max = ROM_SIZE + RAM_SIZE;
+            while (a < max) {
+                int c = fgetc(stdin);
+                if (c == EOF || c == '\n') {
+                    mem_write_tryte(cpu, rom, ram, a, make_tryte(0));
+                    break;
+                }
+                mem_write_tryte(cpu, rom, ram, a, make_tryte((int64_t)c));
+                a++;
+            }
+            break;
+        }
+
+        case OP_RND: {
+            int64_t rv = (int64_t)(rand() % 19683) - 9841;
+            result = make_tryte(rv);
+            cpu_set_reg(cpu, di.reg_dest, result);
+            update_flags(cpu, result);
+            break;
+        }
 
         case OP_JMP:
             next_pc = tryte_to_addr(operand);

@@ -139,6 +139,42 @@ All core modules of the balanced-ternary computer simulator from scratch:
 - `Makefile` — added `test/test_vm.c` to TESTS
 - `examples/bitops.trc`, `examples/euclid.trc`, `examples/memory.trc` — new example programs
 
+## Session 4 — 11 new opcodes (INC, DEC, ABS, JGE, JLE, JMPR, CALLR, OUTNUM, OUTSTR, INSTR, RND)
+
+### New opcodes (11)
+
+| Opcode | Mnemonic | Type | Description |
+|--------|----------|------|-------------|
+| 32 | INC rd | register | rd ← rd + 1 |
+| 33 | DEC rd | register | rd ← rd − 1 |
+| 34 | ABS rd | register | rd ← \|rd\| |
+| 35 | JGE addr | branch | PC ← addr if FLAGS ≥ 0 |
+| 36 | JLE addr | branch | PC ← addr if FLAGS ≤ 0 |
+| 37 | JMPR rs | indirect jump | PC ← rs |
+| 38 | CALLR rs | indirect call | Push PC; PC ← rs |
+| 39 | OUTNUM rs | I/O | Print rs as decimal string |
+| 40 | OUTSTR addr | I/O | Print null-terminated string at addr |
+| 41 | INSTR addr | I/O | Read line into memory at addr |
+| 42 | RND rd | register | rd ← pseudo-random tryte (full range) |
+
+### Key implementation details
+
+- **JMPR/CALLR/OUTNUM** take a single register argument — added to the assembler's special single-register parsing block (alongside PUSH/POP/IN/OUT), encoding the register in `reg_src`.
+- **OUTSTR/INSTR** take an address operand (no registers) — handled by the existing operand-only assembler path.
+- **RND** uses `rand() % 19683 - 9841` to cover the full tryte range (−9841..9841).
+- **Disassembler** `default` case extended with `instr_uses_src(di.op)` check to display single-src register ops (JMPR/CALLR/OUTNUM).
+- All opcodes fit in the existing 5-trit balanced ternary encoding (0–42, max theoretical 121).
+
+### Files changed
+- `src/isa.h` — added `OP_INC=32` through `OP_RND=42`, `OP_COUNT=43`
+- `src/isa.c` — 11 new op_table entries
+- `src/cpu.c` — 11 new switch cases, added `make_tryte()` static helper
+- `src/disasm.c` — added `instr_uses_src` check to default case chain
+- `src/asm.c` — added JMPR/CALLR/OUTNUM to single-register parsing
+- `docs/isa.md` — added opcodes 32–42 to instruction table
+- `test/test_cpu.c` — 8 new tests (inc, dec, abs, abs_positive, jge, jle, jmpr, callr)
+- `test/test_asm.c` — 11 new assembler encoding tests
+
 ### Current test count
 
-6 suites, 210 tests, all passing.
+6 suites, 260 tests (78 test functions), all passing.

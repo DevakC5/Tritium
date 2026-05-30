@@ -338,11 +338,11 @@ AsmResult asm_assemble_ex(const char *source, Tryte **code, size_t *len) {
         char label_ref[64] = "";
         int has_label_ref = 0;
 
-        if (op == OP_PUSH || op == OP_POP || op == OP_IN || op == OP_OUT) {
+        if (op == OP_PUSH || op == OP_POP || op == OP_IN || op == OP_OUT || op == OP_JMPR || op == OP_CALLR || op == OP_OUTNUM) {
             if (ti < ntok) {
                 int r = reg_from_name(tokens[ti]);
                 if (r >= 0) {
-                    if (op == OP_PUSH || op == OP_OUT) reg_src = r;
+                    if (op == OP_PUSH || op == OP_OUT || op == OP_JMPR || op == OP_CALLR || op == OP_OUTNUM) reg_src = r;
                     else reg_dest = r;
                     ti++;
                 }
