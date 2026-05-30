@@ -25,7 +25,7 @@ build/%.o: src/%.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-TESTS := test/test_runner.c test/test_trit.c test/test_gate.c test/test_arith.c test/test_cpu.c test/test_asm.c
+TESTS := test/test_runner.c test/test_trit.c test/test_gate.c test/test_arith.c test/test_cpu.c test/test_asm.c test/test_vm.c
 
 test_runner: $(TESTS) $(LIB)
 	$(CC) $(CFLAGS) $(TESTS) -o $@ $(LDFLAGS) -ltrinary -lm

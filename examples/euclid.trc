@@ -1,0 +1,36 @@
+; Euclidean GCD algorithm using MOD
+; Computes GCD(1071, 462) = 21
+; Uses CALL/RET for subroutine
+;
+; Algorithm:
+;   while b != 0:
+;       a, b = b, a mod b
+;   return a
+
+.equ A_VAL 1071
+.equ B_VAL 462
+
+; Setup
+LOAD ACC, A_VAL
+LOAD B, B_VAL
+
+; Call GCD subroutine
+CALL gcd
+
+; Print result (ACC holds GCD = 21)
+OUT ACC
+
+HLT
+
+; GCD subroutine
+; Input:  ACC = a, B = b
+; Output: ACC = gcd(a, b)
+; Modifies: B, FLAGS
+gcd:
+CMP B, 0            ; check if b == 0
+JE gcd_done         ; if b == 0, return a
+MOD ACC, B          ; a = a mod b
+SWAP ACC, B         ; swap a and b (a,b = b,a mod b)
+JMP gcd             ; loop
+gcd_done:
+RET

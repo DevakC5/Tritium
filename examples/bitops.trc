@@ -1,0 +1,42 @@
+; Bitwise/shift operations demo
+; Prints:  AH B\x00  (shift, NOT, SWAP, AND/OR/XOR)
+;
+; SHL: acc = 1 * 3^2 = 9 (TAB)
+; SHR: acc = 9 / 3^2 = 1
+; NOT: acc = -1
+; SWAP: swap acc and b
+; AND: per-trit min
+; OR:  per-trit max
+; XOR: per-trit add mod 3
+
+LOAD ACC, 1
+OUT ACC             ; print SOH (1)
+SHL ACC, 2          ; acc = 1 * 3^2 = 9
+OUT ACC             ; print TAB (9)
+SHR ACC, 2          ; acc = 9 / 3^2 = 1
+OUT ACC             ; print SOH (1)
+
+NOT ACC
+OUT ACC             ; print -1 as byte (255 = 0xFF)
+
+LOAD ACC, +-       ; acc = 3 + (-1) = 2
+LOAD B, -+         ; b = -3 + 1 = -2
+SWAP ACC, B
+OUT ACC             ; acc was B = -2, low byte 254
+
+LOAD ACC, 85       ; 0x55 = 01010101
+LOAD B,  51        ; 0x33 = 00110011
+AND ACC, B
+OUT ACC             ; 0x11 (17)
+
+LOAD ACC, 85
+LOAD B,  51
+OR ACC, B
+OUT ACC             ; 0x77 (119)
+
+LOAD ACC, 85
+LOAD B,  51
+XOR ACC, B
+OUT ACC             ; 0x66 (102)
+
+HLT

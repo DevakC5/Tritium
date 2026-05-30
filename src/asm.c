@@ -211,8 +211,111 @@ AsmResult asm_assemble_ex(const char *source, Tryte **code, size_t *len) {
                 const char *s = tokens[ti];
                 size_t slen = strlen(s);
                 if (slen >= 3) {
-                    for (size_t ci = 1; ci < slen - 1; ci++)
-                        output[output_len++] = make_tryte((int64_t)(unsigned char)s[ci]);
+                    for (size_t ci = 1; ci < slen - 1; ci++) {
+                        if (s[ci] == '\\' && ci + 1 < slen - 1) {
+                            ci++;
+                            switch (s[ci]) {
+                                case 'n': output[output_len++] = make_tryte(10); break;
+                                case 't': output[output_len++] = make_tryte(9); break;
+                                case 'r': output[output_len++] = make_tryte(13); break;
+                                case '0': output[output_len++] = make_tryte(0); break;
+                                case '\\': output[output_len++] = make_tryte(92); break;
+                                case '"': output[output_len++] = make_tryte(34); break;
+                                default: output[output_len++] = make_tryte((int64_t)(unsigned char)s[ci]); break;
+                            }
+                        } else {
+                            output[output_len++] = make_tryte((int64_t)(unsigned char)s[ci]);
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        if (strcmp(tokens[ti], ".equ") == 0) {
+            ti++;
+            if (ti + 1 < ntok) {
+                const char *ename = tokens[ti++];
+                if (!is_valid_label(ename)) {
+                    result.valid = 0;
+                    result.error_msg = "invalid .equ name";
+                    result.error_line = line_num;
+                    free(output);
+                    return result;
+                }
+                if (sym_find(&st, ename) >= 0) {
+                    result.valid = 0;
+                    result.error_msg = "duplicate .equ symbol";
+                    result.error_line = line_num;
+                    free(output);
+                    return result;
+                }
+                {
+                    int64_t eval;
+                    if (parse_int(tokens[ti], &eval)) {
+                        sym_add(&st, ename, (int)eval);
+                    } else if (is_ternary_literal(tokens[ti])) {
+                        eval = ternary_literal_val(tokens[ti]);
+                        sym_add(&st, ename, (int)eval);
+                    } else if (is_string_literal(tokens[ti])) {
+                        eval = string_first_char_val(tokens[ti]);
+                        if (eval < 0) {
+                            result.valid = 0;
+                            result.error_msg = "empty string in .equ";
+                            result.error_line = line_num;
+                            free(output);
+                            return result;
+                        }
+                        sym_add(&st, ename, (int)eval);
+                    } else {
+                        result.valid = 0;
+                        result.error_msg = "invalid .equ value";
+                        result.error_line = line_num;
+                        free(output);
+                        return result;
+                    }
+                }
+            }
+            continue;
+        }
+
+        if (strcmp(tokens[ti], ".space") == 0) {
+            ti++;
+            if (ti < ntok) {
+                int64_t scount;
+                if (parse_int(tokens[ti], &scount) && scount > 0 && scount < 65536) {
+                    int64_t si;
+                    for (si = 0; si < scount; si++)
+                        output[output_len++] = make_tryte(0);
+                }
+            }
+            continue;
+        }
+
+        if (strcmp(tokens[ti], ".fill") == 0) {
+            ti++;
+            if (ti + 1 < ntok) {
+                int64_t fcount;
+                if (parse_int(tokens[ti], &fcount) && fcount > 0 && fcount < 65536) {
+                    ti++;
+                    int64_t fval;
+                    if (parse_int(tokens[ti], &fval)) {
+                        int64_t fi;
+                        for (fi = 0; fi < fcount; fi++)
+                            output[output_len++] = make_tryte(fval);
+                    } else if (is_ternary_literal(tokens[ti])) {
+                        fval = ternary_literal_val(tokens[ti]);
+                        int64_t fi;
+                        for (fi = 0; fi < fcount; fi++)
+                            output[output_len++] = make_tryte(fval);
+                    } else if (is_string_literal(tokens[ti])) {
+                        fval = string_first_char_val(tokens[ti]);
+                        if (fval >= 0) {
+                            int64_t fi;
+                            for (fi = 0; fi < fcount; fi++)
+                                output[output_len++] = make_tryte(fval);
+                        }
+                    }
                 }
             }
             continue;

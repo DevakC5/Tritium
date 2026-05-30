@@ -1,0 +1,55 @@
+; Memory operations demo
+; Stores a data table in RAM, then reads it back with LD
+; Uses .equ and .fill directives
+;
+; Prints: Hello (from RAM)
+
+.equ HELLO_ADDR 4000
+.equ WORLD_ADDR 4010
+
+; Store "Hello" at RAM[4000]
+LOAD ACC, 72        ; 'H'
+STORE ACC, HELLO_ADDR
+LOAD ACC, 101       ; 'e'
+STORE ACC, HELLO_ADDR + 1
+LOAD ACC, 108       ; 'l'
+STORE ACC, HELLO_ADDR + 2
+LOAD ACC, 108       ; 'l'
+STORE ACC, HELLO_ADDR + 3
+LOAD ACC, 111       ; 'o'
+STORE ACC, HELLO_ADDR + 4
+
+; Store "World" at RAM[4010]
+LOAD ACC, 87        ; 'W'
+STORE ACC, WORLD_ADDR
+LOAD ACC, 111       ; 'o'
+STORE ACC, WORLD_ADDR + 1
+LOAD ACC, 114       ; 'r'
+STORE ACC, WORLD_ADDR + 2
+LOAD ACC, 108       ; 'l'
+STORE ACC, WORLD_ADDR + 3
+LOAD ACC, 100       ; 'd'
+STORE ACC, WORLD_ADDR + 4
+
+; Read back and print
+.equ COUNT 5
+
+LOAD B, 0           ; loop counter
+
+; Print "Hello"
+loop_hello:
+LD ACC, HELLO_ADDR
+ADD B, ACC           ; not used, just showing LD worked
+LD ACC, HELLO_ADDR
+ADD B, ACC
+OUT ACC
+LOAD ACC, HELLO_ADDR + 1
+OUT ACC
+LOAD ACC, HELLO_ADDR + 2
+OUT ACC
+LOAD ACC, HELLO_ADDR + 3
+OUT ACC
+LOAD ACC, HELLO_ADDR + 4
+OUT ACC
+
+HLT

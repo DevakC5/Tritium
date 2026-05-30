@@ -8,6 +8,7 @@ void test_gate_suite(void);
 void test_arith_suite(void);
 void test_cpu_suite(void);
 void test_asm_suite(void);
+void test_vm_suite(void);
 
 int main(void) {
     printf("=== Trinary Test Suite ===\n\n");
@@ -16,6 +17,7 @@ int main(void) {
     mu_run_suite(test_arith_suite);
     mu_run_suite(test_cpu_suite);
     mu_run_suite(test_asm_suite);
+    mu_run_suite(test_vm_suite);
 
     printf("\n=== Results ===\n");
     printf("Tests run: %d\n", mu_tests_run);

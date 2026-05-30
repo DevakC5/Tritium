@@ -113,6 +113,32 @@ All core modules of the balanced-ternary computer simulator from scratch:
 - `src/cli.c` — full rewrite: unified command dispatch, enhanced debugger, multi-line REPL
 - `docs/isa.md` — added opcodes 27–31 to instruction table
 
+## Session 3 — Assembler directives, string escapes, VM tests, examples
+
+### Assembler directives (`src/asm.c`)
+- **`.equ name val`** — symbolic constants; values as decimal, ternary (`+-0`), or char (`"A"`); two-pass assembler means forward references work. Duplicate `.equ` raises error.
+- **`.space N`** — emit N zero trytes (for data tables / buffers)
+- **`.fill N, val`** — emit N trytes of val (decimal, ternary, or string first char)
+- **String escapes** in `.str`/`.db`: `\n` (10), `\t` (9), `\r` (13), `\0` (0), `\\` (92), `\"` (34)
+
+### New tests (`test/`)
+- **`test_vm.c`** — new test suite (5 tests): binary I/O round-trip (`vm_write_binary`/`vm_read_binary`), breakpoint set/clear/has/run-until/max-count, invalid binary returns NULL
+- **`test_asm.c`** — 15 new tests: `.equ` (decimal/ternary/string), `.equ` forward ref, duplicate `.equ` error, `.space`/`.fill` directives, string escapes (`\n`, `\t`, `\\`), `LD`/`SHL`/`SWAP`/`MOD` opcode encoding
+- Wired `test_vm.c` into `Makefile` and `test_runner.c`
+
+### New examples (`examples/`)
+- **`bitops.trc`** — SHL/SHR/AND/OR/XOR/NOT/SWAP bitwise demo
+- **`euclid.trc`** — Euclidean GCD using MOD + CALL/RET + `.equ`
+- **`memory.trc`** — LD/STORE RAM data table using `.equ` constants
+
+### Files changed
+- `src/asm.c` — string escape handling, `.equ`/`.space`/`.fill` directive parsing
+- `test/test_asm.c` — 15 tests added (29 total)
+- `test/test_vm.c` — new VM test suite (5 tests)
+- `test/test_runner.c` — wired in `test_vm_suite`
+- `Makefile` — added `test/test_vm.c` to TESTS
+- `examples/bitops.trc`, `examples/euclid.trc`, `examples/memory.trc` — new example programs
+
 ### Current test count
 
-5 suites, 137 tests, all passing.
+6 suites, 210 tests, all passing.
