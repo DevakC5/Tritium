@@ -1,0 +1,13 @@
+; Fibonacci: print F(1) through F(12) as decimal values
+; B = F(n-1), ACC = F(n), uses memory location 0 as counter
+
+LOAD ACC, 1       ; ACC = F(1)
+LOAD B, 0         ; B = F(0)
+OUT ACC           ; print 1
+
+loop:
+  PUSH ACC        ; save current
+  ADD ACC, B      ; next = curr + prev
+  POP B           ; prev = old curr
+  OUT ACC         ; print next
+  JMP loop

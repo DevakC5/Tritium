@@ -1,0 +1,17 @@
+; Print "Hello!" using OUT instructions
+; Each character's ASCII value is loaded and output
+
+LOAD ACC, 72      ; 'H'
+OUT ACC
+LOAD ACC, 101     ; 'e'
+OUT ACC
+LOAD ACC, 108     ; 'l'
+OUT ACC
+OUT ACC           ; 'l' again
+LOAD ACC, 111     ; 'o'
+OUT ACC
+LOAD ACC, 33      ; '!'
+OUT ACC
+LOAD ACC, 10      ; newline
+OUT ACC
+HLT
