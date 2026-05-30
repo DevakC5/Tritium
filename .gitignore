@@ -3,3 +3,4 @@ lib/
 bin/
 test_runner
 *.o
+compiler/__pycache__/
